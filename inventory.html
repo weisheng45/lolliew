@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Tag Store - Inventory Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .stats-bar {
+            background: #fff3e0;
+            padding: 15px 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            border-bottom: 2px solid #ffcc80;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-card span:first-child {
+            font-weight: bold;
+            color: #d32f2f;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        select, input, button {
+            padding: 10px 15px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        select {
+            background: white;
+            min-width: 130px;
+        }
+
+        button {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #b71c1c;
+            transform: translateY(-2px);
+        }
+
+        .search-box input {
+            width: 250px;
+        }
+
+        .action-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .action-IN {
+            background: #4caf50;
+            color: white;
+        }
+
+        .action-OUT {
+            background: #ff9800;
+            color: white;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid #eee;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f5f5f5;
+            cursor: pointer;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .card-detail {
+            margin: 8px 0;
+            color: #666;
+            font-size: 0.85em;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-detail strong {
+            color: #333;
+            min-width: 70px;
+        }
+
+        .specs {
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 0.8em;
+        }
+
+        .category-tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            margin-top: 8px;
+        }
+
+        .no-image {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #d32f2f;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            cursor: pointer;
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            margin-top: 50px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            .stats-bar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏪 Red Tag Store Inventory</h1>
+            <p>Track IN/OUT transactions with photos, sizes, colors & specifications</p>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card"><span>📦 Total Items:</span> <span id="totalItems">-</span></div>
+            <div class="stat-card"><span>📥 Total IN:</span> <span id="totalIn">-</span></div>
+            <div class="stat-card"><span>📤 Total OUT:</span> <span id="totalOut">-</span></div>
+            <div class="stat-card"><span>🏷️ Categories:</span> <span id="totalCategories">-</span></div>
+        </div>
+
+        <div class="controls">
+            <div class="filter-group">
+                <select id="sortBy">
+                    <option value="date-desc">📅 Latest First</option>
+                    <option value="date-asc">📅 Oldest First</option>
+                    <option value="name">🔤 Name (A-Z)</option>
+                    <option value="name-desc">🔤 Name (Z-A)</option>
+                    <option value="category">📁 Category (A-Z)</option>
+                    <option value="action">📥/📤 Action</option>
+                    <option value="qty-desc">🔢 Quantity (High-Low)</option>
+                </select>
+
+                <select id="filterAction">
+                    <option value="all">📋 All Transactions</option>
+                    <option value="IN">📥 IN Only</option>
+                    <option value="OUT">📤 OUT Only</option>
+                </select>
+
+                <select id="filterCategory">
+                    <option value="all">📂 All Categories</option>
+                </select>
+
+                <select id="filterDepartment">
+                    <option value="all">🏢 All Departments</option>
+                    <option value="LEAN">LEAN</option>
+                    <option value="DC">DC</option>
+                    <option value="CNC">CNC</option>
+                    <option value="FIN">FIN</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Q&E">Q&E</option>
+                    <option value="SPL">SPL</option>
+                    <option value="HMA">HMA</option>
+                </select>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search by name, color, or size...">
+            </div>
+
+            <button id="refreshBtn">🔄 Refresh Data</button>
+        </div>
+
+        <div id="content" class="grid">
+            <div class="loading">📋 Loading inventory data...</div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal">
+        <span class="close-modal">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+        // YOUR GOOGLE SHEET PUBLISHED CSV URL
+        // Replace this with your actual published URL from Google Sheets
+        const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTtPfja7Ck997nZ78m20Sx68sy-s_CMuJmgBB-fH14PlJLaXq3ErR6M104hvu3iTA/pub?output=csv';
+        
+        let allData = [];
+        let currentData = [];
+
+        // Convert Google Drive share link to direct download link
+        function convertGoogleDriveUrl(url) {
+            if (!url) return null;
+            // Already a direct image URL
+            if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return url;
+            // Google Drive sharing link
+            const match = url.match(/id=([^&]+)/);
+            if (match) {
+                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+            }
+            // WhatsApp images are local - can't display
+            if (url.includes('WhatsApp')) return null;
+            return url;
+        }
+
+        // Fetch and parse data
+        async function fetchData() {
+            showLoading();
+            try {
+                const response = await fetch(GOOGLE_SHEET_URL);
+                if (!response.ok) throw new Error('Failed to fetch');
+                const csvText = await response.text();
+                parseCSV(csvText);
+            } catch (error) {
+                console.error('Error:', error);
+                showDemoData();
+            }
+        }
+
+        // Parse CSV from your Excel structure
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim() && !line.startsWith(','));
+            if (lines.length < 2) {
+                showDemoData();
+                return;
+            }
+
+            allData = [];
+            const categoriesSet = new Set();
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                if (values.length < 5) continue;
+
+                const timestamp = values[0] || '';
+                const name = values[1] || '';
+                const department = values[2] || '';
+                const action = values[3] || '';
+                const typeIn = values[4] || '';
+                const qtyIn = parseFloat(values[5]) || 0;
+                const photoUrl = values[6] || '';
+                const typeOut = values[7] || '';
+                const qtyOut = parseFloat(values[8]) || 0;
+                const sizesSpecs = values[9] || '';
+                const color = values[10] || '';
+                const categories = values[14] || values[15] || 'Uncategorized';
+
+                const itemType = typeIn ? typeIn : typeOut;
+                const quantity = qtyIn > 0 ? qtyIn : qtyOut;
+                
+                if (itemType && name) {
+                    const item = {
+                        id: i,
+                        timestamp,
+                        name: name.trim(),
+                        department: department.trim() || 'Unknown',
+                        action: action === 'IN' ? 'IN' : (action === 'OUT' ? 'OUT' : (typeIn ? 'IN' : 'OUT')),
+                        type: itemType.trim(),
+                        quantity: quantity,
+                        photoUrl: convertGoogleDriveUrl(photoUrl),
+                        sizesSpecs: sizesSpecs || 'N/A',
+                        color: color || 'N/A',
+                        category: categories.trim() || 'Uncategorized'
+                    };
+                    
+                    if (item.name && item.type) {
+                        allData.push(item);
+                        if (item.category) categoriesSet.add(item.category);
+                    }
+                }
+            }
+
+            // Populate category filter
+            const categorySelect = document.getElementById('filterCategory');
+            categorySelect.innerHTML = '<option value="all">📂 All Categories</option>';
+            Array.from(categoriesSet).sort().forEach(cat => {
+                categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+
+            currentData = [...allData];
+            applyFilters();
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        // Demo data using your actual Excel data
+        function showDemoData() {
+            allData = [
+                { id: 1, timestamp: "2026-04-10 16:20:31", name: "Risya", department: "DC", action: "IN", type: "Rack", quantity: 1, photoUrl: null, sizesSpecs: "N/A", color: "Royal Ivory", category: "Furniture" },
+                { id: 2, timestamp: "2026-04-15 14:43:21", name: "aqib", department: "LEAN", action: "IN", type: "EPSON ROBOT GAUGE", quantity: 1, photoUrl: null, sizesSpecs: "1220mm x 900mm x1840mm", color: "ROYAL IVORY", category: "Machineries" },
+                { id: 3, timestamp: "2026-04-15 14:46:03", name: "aqib", department: "LEAN", action: "IN", type: "HEAT INSULATION BUBBLE FOIL", quantity: 1, photoUrl: null, sizesSpecs: "1 ROLL", color: "SILVER", category: "Production Tools" },
+                { id: 4, timestamp: "2026-04-15 14:49:08", name: "aqib", department: "LEAN", action: "IN", type: "USM MACHINE", quantity: 1, photoUrl: null, sizesSpecs: "2020mm x 1340 mm x 1220 mm", color: "ROYAL IVORY", category: "Machineries" },
+                { id: 5, timestamp: "2026-04-15 14:53:05", name: "aqib", department: "LEAN", action: "IN", type: "AC/DC ADAPTER", quantity: 1, photoUrl: null, sizesSpecs: "N/A", color: "BLACK", category: "Electrical" },
+                { id: 6, timestamp: "2026-04-15 14:56:28", name: "aqib", department: "LEAN", action: "IN", type: "CONTROL BOX", quantity: 1, photoUrl: null, sizesSpecs: "130mm x 70 mm x 70 mm", color: "ROYAL IVORY", category: "Mechanical" },
+                { id: 7, timestamp: "2026-04-15 15:00:47", name: "aqib", department: "LEAN", action: "IN", type: "STOP PUSH BUTTON", quantity: 1, photoUrl: null, sizesSpecs: "70 mm x 75 mm x 90 mm", color: "ROYAL IVORY", category: "Electrical" },
+                { id: 8, timestamp: "2026-04-15 15:22:07", name: "aqib", department: "LEAN", action: "IN", type: "MICRO DIAPHRAGM PUMP", quantity: 1, photoUrl: null, sizesSpecs: "N/A", color: "BLACK", category: "Electrical" },
+                { id: 9, timestamp: "2026-04-15 15:24:08", name: "aqib", department: "LEAN", action: "IN", type: "BALL VALVE", quantity: 1, photoUrl: null, sizesSpecs: "N/A", color: "SILVER/BLUE", category: "Mechanical" },
+                { id: 10, timestamp: "2026-04-15 15:30:04", name: "AQIB", department: "LEAN", action: "IN", type: "WARNING LIGHT", quantity: 1, photoUrl: null, sizesSpecs: "95 mm x 155 mm", color: "ORANGE /ROYAL IVORY", category: "Production Tools" },
+                { id: 11, timestamp: "2026-04-15 15:32:26", name: "AQIB", department: "LEAN", action: "IN", type: "PRODUCTION OUTPUT DISPLAY BOARD", quantity: 2, photoUrl: null, sizesSpecs: "380 mm x 45 mm x 370 mm", color: "BROWN", category: "Production Tools" },
+                { id: 12, timestamp: "2026-04-15 15:34:59", name: "AQIB", department: "LEAN", action: "IN", type: "Rack", quantity: 1, photoUrl: null, sizesSpecs: "1650mm x 400mm x 1490mm", color: "LIGHT BLUE", category: "Furniture" },
+                { id: 13, timestamp: "2026-04-28 16:53:58", name: "MFA", department: "CNC", action: "OUT", type: "Storage Box", quantity: 17, photoUrl: null, sizesSpecs: "15x15x8.5cm", color: "Black", category: "Stationary" },
+                { id: 14, timestamp: "2026-05-05 16:45:53", name: "Akmal", department: "CNC", action: "IN", type: "Beam rack", quantity: 12, photoUrl: null, sizesSpecs: "N/A", color: "Orange", category: "Furniture" },
+                { id: 15, timestamp: "2026-05-06 11:08:41", name: "Rauf", department: "CNC", action: "IN", type: "Poka yoke HSG D20N86", quantity: 1, photoUrl: null, sizesSpecs: "90kg", color: "White", category: "Machineries" },
+                { id: 16, timestamp: "2026-06-03 16:23:11", name: "Aqib", department: "LEAN", action: "OUT", type: "Control Box", quantity: 1, photoUrl: null, sizesSpecs: "N/A", color: "N/A", category: "Mechanical" },
+                { id: 17, timestamp: "2026-06-03 16:23:43", name: "Aqib", department: "LEAN", action: "OUT", type: "Stop Push Button", quantity: 1, photoUrl: null, sizesSpecs: "N/A", color: "N/A", category: "Mechanical" },
+                { id: 18, timestamp: "2026-06-03 16:24:10", name: "Aqib", department: "LEAN", action: "OUT", type: "Warning Light", quantity: 1, photoUrl: null, sizesSpecs: "N/A", color: "N/A", category: "Production Tools" },
+                { id: 19, timestamp: "2026-06-03 16:24:42", name: "Aqib", department: "LEAN", action: "OUT", type: "Production Output Display Board", quantity: 2, photoUrl: null, sizesSpecs: "N/A", color: "N/A", category: "Production Tools" }
+            ];
+
+            // Add categories to filter
+            const categories = [...new Set(allData.map(i => i.category))];
+            const categorySelect = document.getElementById('filterCategory');
+            categorySelect.innerHTML = '<option value="all">📂 All Categories</option>';
+            categories.sort().forEach(cat => {
+                categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+
+            currentData = [...allData];
+            applyFilters();
+        }
+
+        function sortData(data, sortType) {
+            const sorted = [...data];
+            switch(sortType) {
+                case 'date-asc': return sorted.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+                case 'date-desc': return sorted.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                case 'name': return sorted.sort((a,b) => a.type.localeCompare(b.type));
+                case 'name-desc': return sorted.sort((a,b) => b.type.localeCompare(a.type));
+                case 'category': return sorted.sort((a,b) => a.category.localeCompare(b.category));
+                case 'action': return sorted.sort((a,b) => a.action.localeCompare(b.action));
+                case 'qty-desc': return sorted.sort((a,b) => b.quantity - a.quantity);
+                default: return sorted.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+            }
+        }
+
+        function filterData(data) {
+            const action = document.getElementById('filterAction').value;
+            const category = document.getElementById('filterCategory').value;
+            const department = document.getElementById('filterDepartment').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            return data.filter(item => {
+                if (action !== 'all' && item.action !== action) return false;
+                if (category !== 'all' && item.category !== category) return false;
+                if (department !== 'all' && item.department !== department) return false;
+                if (searchTerm && !item.type.toLowerCase().includes(searchTerm) && 
+                    !item.color.toLowerCase().includes(searchTerm) &&
+                    !item.sizesSpecs.toLowerCase().includes(searchTerm)) return false;
+                return true;
+            });
+        }
+
+        function applyFilters() {
+            const filtered = filterData(allData);
+            const sortType = document.getElementById('sortBy').value;
+            currentData = sortData(filtered, sortType);
+            displayData(currentData);
+            updateStats();
+        }
+
+        function displayData(data) {
+            const container = document.getElementById('content');
+            
+            if (data.length === 0) {
+                container.innerHTML = '<div class="loading" style="grid-column:1/-1">🔍 No items match your filters</div>';
+                return;
+            }
+
+            container.innerHTML = data.map(item => `
+                <div class="card">
+                    ${item.photoUrl ? 
+                        `<img class="card-image" src="${item.photoUrl}" alt="${item.type}" onclick="openModal('${item.photoUrl}')" onerror="this.src='https://via.placeholder.com/350x200?text=No+Image'">` :
+                        `<div class="card-image no-image" onclick="alert('No photo available for this item')">
+                            📷 No Image Available
+                        </div>`
+                    }
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="card-title">${escapeHtml(item.type)}</span>
+                            <span class="action-badge action-${item.action}">${item.action}</span>
+                        </div>
+                        <div class="card-detail">
+                            <strong>👤 Person:</strong> ${escapeHtml(item.name)}
+                        </div>
+                        <div class="card-detail">
+                            <strong>🏢 Dept:</strong> ${escapeHtml(item.department)}
+                        </div>
+                        <div class="card-detail">
+                            <strong>🔢 Qty:</strong> ${item.quantity}
+                        </div>
+                        <div class="card-detail">
+                            <strong>🎨 Color:</strong> ${escapeHtml(item.color)}
+                        </div>
+                        <div class="specs">
+                            <strong>📏 Specs:</strong> ${escapeHtml(item.sizesSpecs)}
+                        </div>
+                        <div class="category-tag">📁 ${escapeHtml(item.category)}</div>
+                        <div class="card-detail" style="font-size:0.7em; margin-top:8px;">
+                            📅 ${new Date(item.timestamp).toLocaleString()}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            const totalItems = currentData.reduce((sum, i) => sum + i.quantity, 0);
+            const totalIn = currentData.filter(i => i.action === 'IN').reduce((sum, i) => sum + i.quantity, 0);
+            const totalOut = currentData.filter(i => i.action === 'OUT').reduce((sum, i) => sum + i.quantity, 0);
+            const uniqueCategories = new Set(currentData.map(i => i.category)).size;
+
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('totalIn').textContent = totalIn;
+            document.getElementById('totalOut').textContent = totalOut;
+            document.getElementById('totalCategories').textContent = uniqueCategories;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showLoading() {
+            document.getElementById('content').innerHTML = '<div class="loading">📋 Loading inventory data...</div>';
+        }
+
+        function openModal(src) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = "block";
+            modalImg.src = src;
+        }
+
+        // Event listeners
+        document.getElementById('sortBy').addEventListener('change', applyFilters);
+        document.getElementById('filterAction').addEventListener('change', applyFilters);
+        document.getElementById('filterCategory').addEventListener('change', applyFilters);
+        document.getElementById('filterDepartment').addEventListener('change', applyFilters);
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('refreshBtn').addEventListener('click', () => { fetchData(); });
+
+        // Modal close
+        document.querySelector('.close-modal').onclick = function() {
+            document.getElementById('imageModal').style.display = "none";
+        }
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('imageModal')) {
+                document.getElementById('imageModal').style.display = "none";
+            }
+        }
+
+        // Initialize with demo data
+        showDemoData();
+    </script>
+</body>
+</html>
