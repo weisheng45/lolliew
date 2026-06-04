@@ -344,19 +344,29 @@
         let currentData = [];
 
         // Convert Google Drive share link to direct download link
-        function convertGoogleDriveUrl(url) {
-            if (!url) return null;
-            // Already a direct image URL
-            if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return url;
-            // Google Drive sharing link
-            const match = url.match(/id=([^&]+)/);
-            if (match) {
-                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-            }
-            // WhatsApp images are local - can't display
-            if (url.includes('WhatsApp')) return null;
-            return url;
-        }
+ function convertGoogleDriveUrl(url) {
+    if (!url || url === '') return null;
+    
+    // Already a direct image URL
+    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return url;
+    
+    // Google Drive sharing link - convert to direct download
+    let match = url.match(/id=([^&]+)/);
+    if (match) {
+        return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    
+    // Alternative Google Drive format
+    match = url.match(/\/d\/([^\/]+)/);
+    if (match) {
+        return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    
+    // WhatsApp or other local images - can't display
+    if (url.includes('WhatsApp')) return null;
+    
+    return null;
+}
 
         // Fetch and parse data
         async function fetchData() {
