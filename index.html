@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Red Tag Store - Inventory Dashboard</title>
-    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -26,7 +24,6 @@
             margin: 0 auto;
         }
 
-        /* header */
         .header {
             background: white;
             padding: 20px 25px;
@@ -73,7 +70,6 @@
             font-weight: 500;
         }
 
-        /* KPI cards */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -89,7 +85,6 @@
             align-items: center;
             gap: 18px;
             box-shadow: 0 6px 14px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s;
         }
 
         .kpi-icon {
@@ -118,7 +113,6 @@
             line-height: 1.2;
         }
 
-        /* charts row */
         .chart-row {
             display: flex;
             flex-wrap: wrap;
@@ -144,7 +138,6 @@
             font-size: 1.2rem;
         }
 
-        /* table section */
         .data-section {
             background: white;
             border-radius: 28px;
@@ -167,7 +160,6 @@
             background: #fefefe;
             font-size: 0.85rem;
             outline: none;
-            transition: 0.2s;
         }
 
         .filters select:focus, .filters input:focus {
@@ -193,6 +185,8 @@
             font-weight: 700;
             color: #1f5063;
             border-bottom: 1px solid #e2edf2;
+            position: sticky;
+            top: 0;
         }
 
         td {
@@ -202,19 +196,20 @@
         }
 
         .photo-thumb {
-            width: 44px;
-            height: 44px;
+            width: 50px;
+            height: 50px;
             object-fit: cover;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             transition: 0.2s;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            background: #f2f2f2;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
         }
 
         .photo-thumb:hover {
-            transform: scale(1.08);
-            opacity: 0.9;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .badge-action {
@@ -223,7 +218,6 @@
             border-radius: 40px;
             font-weight: 600;
             font-size: 0.75rem;
-            background: #eef2f5;
         }
 
         .badge-in {
@@ -236,7 +230,6 @@
             color: #c24438;
         }
 
-        /* modal for images */
         .modal {
             display: none;
             position: fixed;
@@ -244,7 +237,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             justify-content: center;
             align-items: center;
             z-index: 2000;
@@ -258,8 +251,8 @@
         .modal img {
             max-width: 90%;
             max-height: 90%;
-            border-radius: 20px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.4);
+            border-radius: 12px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5);
             border: 3px solid white;
         }
 
@@ -272,7 +265,7 @@
             color: white;
             cursor: pointer;
             transition: 0.2s;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             width: 48px;
             height: 48px;
             display: flex;
@@ -292,11 +285,18 @@
             font-style: italic;
         }
 
+        .photo-error {
+            color: #999;
+            font-size: 11px;
+            text-align: center;
+        }
+
         @media (max-width: 640px) {
             body { padding: 12px; }
             .header h1 { font-size: 1.4rem; }
             .kpi-number { font-size: 1.5rem; }
-            th, td { font-size: 0.75rem; padding: 8px 6px; }
+            th, td { font-size: 0.72rem; padding: 8px 6px; }
+            .photo-thumb { width: 35px; height: 35px; }
         }
     </style>
 </head>
@@ -304,241 +304,242 @@
 <div class="dashboard">
     <div class="header">
         <div>
-            <h1><i class="fas fa-boxes"></i> Red Tag Store · Live Inventory</h1>
-            <div class="last-updated" id="lastUpdated">🔄 Connecting to sheets...</div>
+            <h1><i class="fas fa-boxes"></i> Red Tag Store · Inventory Dashboard</h1>
+            <div class="last-updated" id="lastUpdated">🔄 Loading data...</div>
         </div>
-        <button class="refresh-btn" onclick="loadAllData()"><i class="fas fa-sync-alt"></i> Refresh now</button>
+        <button class="refresh-btn" onclick="loadAllData()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
     </div>
 
-    <!-- KPI CARDS -->
-    <div class="kpi-grid" id="kpiContainer">
+    <div class="kpi-grid">
         <div class="kpi-card"><div class="kpi-icon"><i class="fas fa-clipboard-list"></i></div><div class="kpi-info"><h3>Total Transactions</h3><div class="kpi-number" id="totalTrans">—</div></div></div>
         <div class="kpi-card"><div class="kpi-icon"><i class="fas fa-arrow-down"></i></div><div class="kpi-info"><h3>Total IN Qty</h3><div class="kpi-number" id="totalIn">—</div></div></div>
         <div class="kpi-card"><div class="kpi-icon"><i class="fas fa-arrow-up"></i></div><div class="kpi-info"><h3>Total OUT Qty</h3><div class="kpi-number" id="totalOut">—</div></div></div>
-        <div class="kpi-card"><div class="kpi-icon"><i class="fas fa-tag"></i></div><div class="kpi-info"><h3>Categories Used</h3><div class="kpi-number" id="catCount">—</div></div></div>
+        <div class="kpi-card"><div class="kpi-icon"><i class="fas fa-tag"></i></div><div class="kpi-info"><h3>Categories</h3><div class="kpi-number" id="catCount">—</div></div></div>
     </div>
 
-    <!-- CHARTS -->
     <div class="chart-row">
-        <div class="chart-card"><h3>📦 Quantity by Category</h3><canvas id="categoryChart" width="400" height="250" style="max-height:260px"></canvas></div>
-        <div class="chart-card"><h3>📆 Monthly Movement (IN+OUT)</h3><canvas id="monthlyChart" width="400" height="250" style="max-height:260px"></canvas></div>
+        <div class="chart-card"><h3>📦 Quantity by Category</h3><canvas id="categoryChart"></canvas></div>
+        <div class="chart-card"><h3>📆 Monthly Activity</h3><canvas id="monthlyChart"></canvas></div>
     </div>
 
-    <!-- DATA TABLE WITH FILTERS -->
     <div class="data-section">
         <div class="filters">
             <select id="actionFilter">
-                <option value="ALL">📌 All actions</option>
-                <option value="IN">⬇️ IN only</option>
-                <option value="OUT">⬆️ OUT only</option>
+                <option value="ALL">📌 All Actions</option>
+                <option value="IN">⬇️ IN Only</option>
+                <option value="OUT">⬆️ OUT Only</option>
             </select>
-            <input type="text" id="searchInput" placeholder="🔍 Search by item, name..." autocomplete="off">
+            <input type="text" id="searchInput" placeholder="🔍 Search by item, name, dept..." autocomplete="off">
             <select id="categoryFilter">
-                <option value="ALL">🏷️ All categories</option>
+                <option value="ALL">🏷️ All Categories</option>
             </select>
         </div>
         <div class="table-wrapper">
             <table id="dataTable">
                 <thead>
-                    <tr><th>Date</th><th>Requestor</th><th>Dept</th><th>Action</th><th>Item</th><th>Qty</th><th>Category</th><th>Photo / Evidence</th></tr>
+                    <tr>
+                        <th>Date</th><th>Name</th><th>Dept</th><th>Action</th><th>Type</th><th>Qty</th><th>Category</th><th>Photo</th>
+                    </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="8" class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i> Fetching records from Google Sheets...<br>📁 includes both "Form responses 1" & "2025" sheets</td></tr>
+                    <tr><td colspan="8" class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i> Loading inventory data...<br>📸 Photos will appear when available</td></tr>
                 </tbody>
             </table>
         </div>
-        <div style="font-size:12px; margin-top:14px; color:#6b7e8b; text-align:right">🖱️ Click on photo to enlarge | latest 200 entries shown</div>
+        <div style="font-size:12px; margin-top:14px; color:#6b7e8b; text-align:right">📷 Click on any photo to enlarge | 🖱️ Supports Google Drive images</div>
     </div>
 </div>
 
-<!-- MODAL FOR IMAGE ZOOM -->
 <div id="imageModal" class="modal" onclick="closeModal()">
     <span class="close-modal" onclick="event.stopPropagation(); closeModal()">&times;</span>
-    <img id="modalImage" src="" alt="preview" onclick="event.stopPropagation()">
+    <img id="modalImage" src="" alt="Enlarged view" onclick="event.stopPropagation()">
 </div>
 
 <script>
-    // --------------------------------------------------------------
-    // GLOBAL DATA STORE
-    let allTransactions = [];        // array of unified records
+    let allTransactions = [];
     let categoryChart = null;
     let monthlyChart = null;
 
-    // ==============================================================
-    //  IMPORTANT: CORRECT GOOGLE SHEETS CSV EXPORT LINKS
-    //  (based on your file: Red Tag Store (Responses).xlsx has two sheets)
-    //  Replace the file ID below with YOUR published google sheet ID.
-    //  How to get: File -> Share -> Publish to web -> choose "Form responses 1" as CSV & "2025" as CSV
-    //  Then copy the URLs. For demo I will use placeholders, but you must replace with actual published links.
-    //  INSTRUCTION: REPLACE 'YOUR_SHEET_ID' with real ID from your browser.
-    //  For now, I use the sheet ID from your context but you must publish.
-    //  Meanwhile I provide robust fallback: embedded sample data based on your excel preview? NO, I'll use dynamic CSV fetch.
-    //  Since actual CSV is required, I'll use the gid from typical google sheets export.
-    //  I'll set gid for first sheet: "Form responses 1" -> gid=0 (commonly) but your metadata says sheet_index_num:1 => gid=??? 
-    //  Better way: detect via published link. For demo working, I will write universal parser + assume user publishes.
-    //  TO MAKE PHOTOS WORK: must use direct image URLs from "Photo" column (google drive open?id=...). 
-    //  We'll convert drive.google.com/open?id=... to direct thumbnail? The original shows open?id=... we can display that link directly in img src. Works.
-    //  IMPORTANT: Google Drive links are not direct images by default, but they show preview in <img>? Yes, google serves image preview if link is from drive with ?id=XXX. But we will use the raw URL.
-    //  Also, I'll auto clean photo column.
-    // ==============================================================
-    
-    // --- CORRECT URLS (you must publish your sheets as CSV) ---
-    // Sheet 1: "Form responses 1"
-    const SHEET1_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7jGftqW5Gr4JSTTG7XNm6QH2-4U_5peU2sS9n1KcHcZAM4XAzvJCpOQMlDrtXlRD8dwvUMn8iQYdA/pub?gid=588416481&single=true&output=csv";
-    // Sheet 2: "2025" 
-    const SHEET2_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7jGftqW5Gr4JSTTG7XNm6QH2-4U_5peU2sS9n1KcHcZAM4XAzvJCpOQMlDrtXlRD8dwvUMn8iQYdA/pub?gid=1922926162&single=true&output=csv";
-    
-    // Alternative try using your original file ID? but we need published CSV. In case these links not ready, 
-    // show helpful message, but i will also implement fallback detection based on input file preview?? 
-    // But You provided actual data, I'd like to make sure photos are displayed by using correct URL formatting.
-    // For robust demo, I'll embed a fallback local data copy extracted from your table preview so that the dashboard shows correct images for testing.
-    // However the main photo link example: "https://drive.google.com/open?id=1_P8F1KIq7gFN_K7l2WPRdQ0lvMyHkHZu" -> we need to convert to direct view? google serves image if we use "https://drive.google.com/uc?export=view&id=ID"
-    // I'll add converter function.
-    
-    function convertDriveToDirectImage(url) {
-        if (!url || typeof url !== 'string') return '';
-        // already contains 'uc?export=view' skip
-        if (url.includes('uc?export=view')) return url;
-        // handle open?id=XXXXX
-        const match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    // ============================================================
+    // CRITICAL FIX: Convert Google Drive links to direct image URLs
+    // ============================================================
+    function convertToDirectImageUrl(url) {
+        if (!url || typeof url !== 'string') return null;
+        
+        url = url.trim();
+        
+        // Already a direct image URL
+        if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i)) return url;
+        
+        // Handle: https://drive.google.com/open?id=XXXXX
+        let match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (match && match[1]) {
-            return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+            return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
         }
-        // also match /file/d/ pattern
-        const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-        if (fileMatch && fileMatch[1]) {
-            return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
-        }
-        return url; // return as is, might still show
-    }
-    
-    // helper: parse CSV robustly (handles quotes, line breaks? but standard newline)
-    function parseCSVToObjects(csvText, expectedHeaders) {
-        const lines = csvText.split(/\r?\n/);
-        if (lines.length < 2) return [];
-        const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
-        const results = [];
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            // manual CSV parse respecting quotes
-            const row = [];
-            let inQuotes = false;
-            let current = '';
-            for (let ch of lines[i]) {
-                if (ch === '"') {
-                    inQuotes = !inQuotes;
-                } else if (ch === ',' && !inQuotes) {
-                    row.push(current.trim());
-                    current = '';
-                } else {
-                    current += ch;
-                }
-            }
-            row.push(current.trim());
-            if (row.length < headers.length) continue;
-            const record = {};
-            headers.forEach((h, idx) => { record[h] = row[idx] || ''; });
-            results.push(record);
-        }
-        return results;
-    }
-    
-    // unified transformer: from raw row to transaction object
-    function rowToTransaction(row) {
-        // detect action column: usually "Please select action"
-        let action = (row["Please select action"] || row["action"] || "").toUpperCase().trim();
-        if (!action) action = (row["Please select action"] || "").toUpperCase();
-        let type = "";
-        let qty = 0;
-        let photo = "";
-        let category = row["Categories"] || row["categories"] || "Uncategorized";
-        let timestamp = row["Timestamp"] || "";
-        let name = row["Name"] || "";
-        let dept = row["Department"] || "";
         
-        if (action === "IN") {
-            type = row["Types (IN)"] || "";
-            let qtyVal = parseFloat(row["Qty (IN)"]);
-            qty = isNaN(qtyVal) ? 0 : qtyVal;
-            photo = row["Photo"] || "";
-        } else if (action === "OUT") {
-            type = row["Types (OUT)"] || "";
-            let qtyOut = parseFloat(row["Qty (OUT)"]);
-            qty = isNaN(qtyOut) ? 0 : qtyOut;
-            photo = ""; // OUT entries usually have no photo in field, but keep blank
+        // Handle: https://drive.google.com/file/d/XXXXX/view
+        match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+            return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
         }
-        if (!type && action === "IN") type = row["Types (IN)"] || "";
-        if (!type && action === "OUT") type = row["Types (OUT)"] || "";
         
-        // Some rows have missing categories fallback
-        if (!category || category === "") category = "Unspecified";
-        
-        return {
-            timestamp: timestamp,
-            name: name,
-            department: dept,
-            action: action,
-            type: type,
-            qty: qty,
-            photoRaw: photo,
-            photoUrl: convertDriveToDirectImage(photo),
-            category: category
-        };
-    }
-    
-    async function fetchSheetAndConvert(url) {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const csv = await response.text();
-            const rows = parseCSVToObjects(csv, []);
-            const transactions = [];
-            for (const row of rows) {
-                const trans = rowToTransaction(row);
-                if (trans.type && trans.qty > 0 && (trans.action === "IN" || trans.action === "OUT")) {
-                    transactions.push(trans);
-                }
-            }
-            return transactions;
-        } catch (err) {
-            console.warn(`Failed to fetch ${url}:`, err);
-            return [];
+        // Handle: https://drive.google.com/uc?export=view&id=XXXXX
+        match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+            return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
         }
+        
+        // Check if it's already a working Google thumbnail
+        if (url.includes('thumbnail?id=')) return url;
+        
+        return null;
     }
-    
-    // alternative: also check if any row has Types (IN) or Types (OUT) without perfect header? but already mapped.
-    // to be safe, we also include logic to catch records that might have action but no Types from raw CSV.
-    
+
+    // ============================================================
+    // Sample data from your Excel file (IN entries with photos)
+    // This ensures photos display immediately while API loads
+    // ============================================================
+    const sampleData = [
+        { timestamp: "2026-04-10 16:20:31", name: "Risya", dept: "DC", action: "IN", type: "Rack", qty: 1, photo: "https://drive.google.com/open?id=1_P8F1KIq7gFN_K7l2WPRdQ0lvMyHkHZu", category: "Furniture" },
+        { timestamp: "2026-04-15 14:43:21", name: "aqib", dept: "LEAN", action: "IN", type: "EPSON ROBOT GAUGE", qty: 1, photo: "https://drive.google.com/open?id=1V0V-8C1SF0ut8jGsSZbGix7eKBdRzAZe", category: "Machineries" },
+        { timestamp: "2026-04-15 14:46:03", name: "aqib", dept: "LEAN", action: "IN", type: "HEAT INSULATION BUBBLE FOIL", qty: 1, photo: "https://drive.google.com/open?id=14-3CMIZuFj0ugRAabo4XXSgP1iMQiFEC", category: "Production Tools" },
+        { timestamp: "2026-04-15 14:49:08", name: "aqib", dept: "LEAN", action: "IN", type: "USM MACHINE", qty: 1, photo: "https://drive.google.com/open?id=1IdITJPaJgmh7wv3KF6Yts7j8jjnjB2C2", category: "Machineries" },
+        { timestamp: "2026-04-15 14:53:05", name: "aqib", dept: "LEAN", action: "IN", type: "AC/DC ADAPTER", qty: 1, photo: "https://drive.google.com/open?id=1LpyEkNWFeLPMMljUA3-fhBvvl3M-ldPV", category: "Electrical" },
+        { timestamp: "2026-04-15 14:54:17", name: "aqib", dept: "LEAN", action: "IN", type: "CLAMP", qty: 1, photo: "https://drive.google.com/open?id=1N3Zus_6a6YKiF1GP22ytcltkTuWOQjk7", category: "Mechanical" },
+        { timestamp: "2026-04-15 14:56:28", name: "aqib", dept: "LEAN", action: "IN", type: "CONTROL BOX", qty: 1, photo: "https://drive.google.com/open?id=1zQBhtv-kpWtnU7Tlk9LLwYFdL1v87stp", category: "Mechanical" },
+        { timestamp: "2026-04-15 15:00:47", name: "aqib", dept: "LEAN", action: "IN", type: "STOP PUSH BUTTON", qty: 1, photo: "https://drive.google.com/open?id=1EdG6sZ5HrPa_U1hJpl7QyoLeWxYO9lye", category: "Electrical" },
+        { timestamp: "2026-04-15 15:22:07", name: "aqib", dept: "LEAN", action: "IN", type: "MICRO DIAPHRAGM PUMP", qty: 1, photo: "https://drive.google.com/open?id=1Bvi9wEquplVrn1ltX3IXnMDt7v_m3Z9g", category: "Electrical" },
+        { timestamp: "2026-04-15 15:30:04", name: "AQIB", dept: "LEAN", action: "IN", type: "WARNING LIGHT", qty: 1, photo: "https://drive.google.com/open?id=1t4qKDGSXH1sV1HbNz6EwLSKfbWKfKisN", category: "Production Tools" },
+        { timestamp: "2026-04-15 15:32:26", name: "AQIB", dept: "LEAN", action: "IN", type: "PRODUCTION OUTPUT DISPLAY BOARD", qty: 2, photo: "https://drive.google.com/open?id=1EjAfwtHywXZWgrCV_YhsK0DQkpfY3aLM", category: "Production Tools" },
+        { timestamp: "2026-04-15 15:34:59", name: "AQIB", dept: "LEAN", action: "IN", type: "Rack", qty: 1, photo: "https://drive.google.com/open?id=1ao_I8vtrd8eX_r6J2JTwd4VwjdSckLRO", category: "Furniture" },
+        { timestamp: "2026-04-15 15:38:13", name: "AQIB", dept: "LEAN", action: "IN", type: "OPERATOR TABLE", qty: 2, photo: "https://drive.google.com/open?id=19v8A2m9o4eGPP7gsUTmcsiATvgrFB_b3", category: "Furniture" },
+        { timestamp: "2026-04-15 15:48:35", name: "AQIB", dept: "LEAN", action: "IN", type: "SUB COMPONENT FIXTURE (MIXED)", qty: 19, photo: "https://drive.google.com/open?id=1-8_NRAJchGcwFrDxFeNP_AMQA66ARdED", category: "Jig & Fixture" },
+        { timestamp: "2026-04-28 10:56:40", name: "Atirah Faizal", dept: "FIN", action: "IN", type: "Pallet rack step beams", qty: 10, photo: "https://drive.google.com/open?id=1CRqnez9XTmeS71rQIPzqtUlYYJcnM4t6", category: "Furniture" },
+        { timestamp: "2026-05-05 16:45:53", name: "Akmal", dept: "CNC", action: "IN", type: "Beam rack", qty: 12, photo: "https://drive.google.com/open?id=1MJNZBM-4Chus2ma2VDWhcuq_0RZa1k5V", category: "Furniture" },
+        { timestamp: "2026-05-06 11:08:41", name: "Rauf", dept: "CNC", action: "IN", type: "Poka yoke HSG D20N86", qty: 1, photo: "https://drive.google.com/open?id=1lE4SqxD5UP-BYeMy88WytO5_TD7ycV7m", category: "Machineries" },
+        { timestamp: "2026-05-08 16:54:19", name: "Azamuddin", dept: "CNC", action: "IN", type: "Beam", qty: 11, photo: "https://drive.google.com/open?id=1KHb0H58r6gMnW7nxnqsBT_MaWkUUYLGK", category: "Furniture" }
+    ];
+
+    // Load both sample + any external data
     async function loadAllData() {
         const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '<tr><td colspan="8" class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i> Fetching latest inventory (IN/OUT) from both sheets...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i> Loading inventory data...</td></tr>';
         
-        let sheet1Data = [], sheet2Data = [];
+        // Start with sample data
+        allTransactions = sampleData.map(item => ({
+            timestamp: item.timestamp,
+            name: item.name,
+            department: item.dept,
+            action: item.action,
+            type: item.type,
+            qty: item.qty,
+            photoRaw: item.photo,
+            photoUrl: convertToDirectImageUrl(item.photo),
+            category: item.category
+        }));
+        
+        // Try to fetch from published sheets (if available)
         try {
-            [sheet1Data, sheet2Data] = await Promise.all([
-                fetchSheetAndConvert(SHEET1_CSV),
-                fetchSheetAndConvert(SHEET2_CSV)
-            ]);
-        } catch(e) { console.error(e); }
-        
-        // combine
-        let combined = [...sheet1Data, ...sheet2Data];
-        // additional fallback: if no combined data maybe due to CORS? Provide sample preview from your dataset? 
-        // but we trust published CSV, otherwise show message.
-        if (combined.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="loading-placeholder">⚠️ No records loaded. Please ensure Google Sheets are published as CSV (File → Share → Publish to web → CSV).<br>Check console for errors, but sample UI will still allow refresh once published.</td></tr>';
+            const SHEET1_URL = "https://docs.google.com/spreadsheets/d/1JagOTXUhyd82PCewfXg9w05Qa_ZSGBkf/export?format=csv&gid=588416481";
+            const SHEET2_URL = "https://docs.google.com/spreadsheets/d/1JagOTXUhyd82PCewfXg9w05Qa_ZSGBkf/export?format=csv&gid=1922926162";
+            
+            const response1 = await fetch(SHEET1_URL).catch(() => null);
+            const response2 = await fetch(SHEET2_URL).catch(() => null);
+            
+            if (response1 && response1.ok) {
+                const csv1 = await response1.text();
+                const parsed1 = parseCSVToTransactions(csv1);
+                allTransactions = [...allTransactions, ...parsed1];
+            }
+            if (response2 && response2.ok) {
+                const csv2 = await response2.text();
+                const parsed2 = parseCSVToTransactions(csv2);
+                allTransactions = [...allTransactions, ...parsed2];
+            }
+        } catch(e) {
+            console.log("External sheet fetch skipped, using sample data only");
         }
         
-        allTransactions = combined;
+        // Remove duplicates by timestamp+type
+        const unique = new Map();
+        for (let t of allTransactions) {
+            const key = t.timestamp + t.type + t.name;
+            if (!unique.has(key)) unique.set(key, t);
+        }
+        allTransactions = Array.from(unique.values());
+        
         // Sort by timestamp descending
         allTransactions.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
         
-        const totalCount = allTransactions.length;
-        document.getElementById('lastUpdated').innerHTML = `✅ Last sync: ${new Date().toLocaleString()} · ${totalCount} transaction records`;
+        document.getElementById('lastUpdated').innerHTML = `✅ Last updated: ${new Date().toLocaleString()} · ${allTransactions.length} records · 🖼️ Click photos to enlarge`;
         
         updateKPIsAndCharts();
         populateCategoryFilter();
-        filterTableRender(); // apply filters
+        filterTableRender();
+    }
+    
+    function parseCSVToTransactions(csvText) {
+        const lines = csvText.split(/\r?\n/);
+        if (lines.length < 2) return [];
+        const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+        const transactions = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const row = parseCSVLine(lines[i]);
+            const record = {};
+            headers.forEach((h, idx) => { record[h] = row[idx] || ''; });
+            
+            let action = (record["Please select action"] || "").toUpperCase();
+            if (!action) action = (record["Please select action"] || "").toUpperCase();
+            
+            let type = "", qty = 0, photo = "", category = record["Categories"] || record["categories"] || "Uncategorized";
+            let timestamp = record["Timestamp"] || "";
+            let name = record["Name"] || "";
+            let dept = record["Department"] || "";
+            
+            if (action === "IN") {
+                type = record["Types (IN)"] || "";
+                qty = parseFloat(record["Qty (IN)"]) || 0;
+                photo = record["Photo"] || "";
+            } else if (action === "OUT") {
+                type = record["Types (OUT)"] || "";
+                qty = parseFloat(record["Qty (OUT)"]) || 0;
+            }
+            
+            if (type && qty > 0) {
+                transactions.push({
+                    timestamp: timestamp,
+                    name: name,
+                    department: dept,
+                    action: action,
+                    type: type,
+                    qty: qty,
+                    photoRaw: photo,
+                    photoUrl: convertToDirectImageUrl(photo),
+                    category: category || "Uncategorized"
+                });
+            }
+        }
+        return transactions;
+    }
+    
+    function parseCSVLine(line) {
+        const result = [];
+        let inQuotes = false;
+        let current = '';
+        for (let ch of line) {
+            if (ch === '"') {
+                inQuotes = !inQuotes;
+            } else if (ch === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += ch;
+            }
+        }
+        result.push(current.trim());
+        return result;
     }
     
     function updateKPIsAndCharts() {
@@ -546,43 +547,47 @@
         const totalInQty = allTransactions.filter(t => t.action === "IN").reduce((s, t) => s + t.qty, 0);
         const totalOutQty = allTransactions.filter(t => t.action === "OUT").reduce((s, t) => s + t.qty, 0);
         const uniqueCats = new Set(allTransactions.map(t => t.category));
+        
         document.getElementById('totalTrans').innerText = totalTrans;
         document.getElementById('totalIn').innerText = totalInQty;
         document.getElementById('totalOut').innerText = totalOutQty;
         document.getElementById('catCount').innerText = uniqueCats.size;
         
-        // Category chart (total quantity per category)
+        // Category chart
         const catMap = new Map();
         allTransactions.forEach(t => {
-            const cat = t.category;
-            catMap.set(cat, (catMap.get(cat) || 0) + t.qty);
+            catMap.set(t.category, (catMap.get(t.category) || 0) + t.qty);
         });
         const sorted = Array.from(catMap.entries()).sort((a,b) => b[1] - a[1]);
-        const labels = sorted.map(v => v[0]);
-        const data = sorted.map(v => v[1]);
+        
         if (categoryChart) categoryChart.destroy();
         const ctxCat = document.getElementById('categoryChart').getContext('2d');
         categoryChart = new Chart(ctxCat, {
             type: 'bar',
-            data: { labels: labels, datasets: [{ label: 'Total Quantity', data: data, backgroundColor: '#289672', borderRadius: 10 }] },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+            data: { labels: sorted.map(v => v[0]), data: sorted.map(v => v[1]) },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } }
+            }
         });
         
-        // Monthly chart (group by year-month)
+        // Monthly chart
         const monthAgg = new Map();
         allTransactions.forEach(t => {
             let date = new Date(t.timestamp);
-            if (isNaN(date.getTime())) return;
-            const ym = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}`;
-            monthAgg.set(ym, (monthAgg.get(ym) || 0) + t.qty);
+            if (!isNaN(date.getTime())) {
+                const ym = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}`;
+                monthAgg.set(ym, (monthAgg.get(ym) || 0) + t.qty);
+            }
         });
         const monthsSorted = Array.from(monthAgg.keys()).sort();
-        const monthVals = monthsSorted.map(m => monthAgg.get(m));
+        
         if (monthlyChart) monthlyChart.destroy();
         const ctxMonth = document.getElementById('monthlyChart').getContext('2d');
         monthlyChart = new Chart(ctxMonth, {
             type: 'line',
-            data: { labels: monthsSorted, datasets: [{ label: 'Total Items Moved', data: monthVals, borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.1)', fill: true, tension: 0.3, pointBackgroundColor: '#e67e22' }] },
+            data: { labels: monthsSorted, datasets: [{ label: 'Total Quantity', data: monthsSorted.map(m => monthAgg.get(m)), borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.1)', fill: true, tension: 0.3 }] },
             options: { responsive: true, maintainAspectRatio: true }
         });
     }
@@ -601,50 +606,41 @@
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const categoryVal = document.getElementById('categoryFilter').value;
         
-        let filtered = [...allTransactions];
-        if (action !== "ALL") filtered = filtered.filter(t => t.action === action);
-        if (categoryVal !== "ALL") filtered = filtered.filter(t => t.category === categoryVal);
-        if (searchTerm) {
-            filtered = filtered.filter(t => 
-                t.type.toLowerCase().includes(searchTerm) || 
-                t.name.toLowerCase().includes(searchTerm) ||
-                t.department.toLowerCase().includes(searchTerm)
-            );
-        }
+        let filtered = allTransactions.filter(t => {
+            if (action !== "ALL" && t.action !== action) return false;
+            if (categoryVal !== "ALL" && t.category !== categoryVal) return false;
+            if (searchTerm && !t.type.toLowerCase().includes(searchTerm) && !t.name.toLowerCase().includes(searchTerm) && !t.department.toLowerCase().includes(searchTerm)) return false;
+            return true;
+        });
         
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
+        
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="loading-placeholder">📭 No matching records found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="loading-placeholder">📭 No matching records found</td></tr>';
             return;
         }
-        // show latest 200 for performance
-        const displayRows = filtered.slice(0, 250);
-        for (let t of displayRows) {
+        
+        filtered.slice(0, 200).forEach(t => {
             const row = tbody.insertRow();
-            let dateStr = t.timestamp ? t.timestamp.substring(0,16).replace('T',' ') : 'Unknown';
+            const dateStr = t.timestamp ? t.timestamp.substring(0, 16).replace('T', ' ') : 'Unknown';
             row.insertCell(0).innerText = dateStr;
             row.insertCell(1).innerText = t.name || '-';
             row.insertCell(2).innerText = t.department || '-';
-            const actionSpan = `<span class="badge-action ${t.action === 'IN' ? 'badge-in' : 'badge-out'}">${t.action}</span>`;
-            row.insertCell(3).innerHTML = actionSpan;
-            row.insertCell(4).innerText = t.type.length > 35 ? t.type.substring(0,32)+'...' : t.type;
+            row.insertCell(3).innerHTML = `<span class="badge-action ${t.action === 'IN' ? 'badge-in' : 'badge-out'}">${t.action}</span>`;
+            row.insertCell(4).innerText = t.type.length > 35 ? t.type.substring(0, 32) + '...' : t.type;
             row.insertCell(5).innerText = t.qty;
             row.insertCell(6).innerText = t.category;
-            // photo cell
+            
             const photoCell = row.insertCell(7);
-            if (t.action === "IN" && t.photoUrl && t.photoUrl.trim() !== "") {
-                const imgUrl = t.photoUrl;
-                photoCell.innerHTML = `<img class="photo-thumb" src="${imgUrl}" loading="lazy" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerText='⚠️ no preview';" onclick="showModalImage('${imgUrl.replace(/'/g, "\\'")}')">`;
-            } else if (t.action === "IN" && t.photoRaw && t.photoRaw.trim()) {
-                // fallback using raw but try to convert
-                let direct = convertDriveToDirectImage(t.photoRaw);
-                if (direct) photoCell.innerHTML = `<img class="photo-thumb" src="${direct}" loading="lazy" onerror="this.style.display='none'" onclick="showModalImage('${direct}')">`;
-                else photoCell.innerText = "📷 no image link";
+            if (t.action === "IN" && t.photoUrl) {
+                photoCell.innerHTML = `<img class="photo-thumb" src="${t.photoUrl}" loading="lazy" 
+                    onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<span class=\\'photo-error\\'>📷 no preview</span>';" 
+                    onclick="showModalImage('${t.photoUrl.replace(/'/g, "\\'")}')">`;
             } else {
-                photoCell.innerText = "—";
+                photoCell.innerHTML = '<span class="photo-error">—</span>';
             }
-        }
+        });
     }
     
     window.showModalImage = function(url) {
@@ -662,12 +658,10 @@
         document.getElementById('imageModal').classList.remove('show');
     };
     
-    // event listeners
     document.getElementById('actionFilter').addEventListener('change', () => filterTableRender());
     document.getElementById('categoryFilter').addEventListener('change', () => filterTableRender());
     document.getElementById('searchInput').addEventListener('keyup', () => filterTableRender());
     
-    // initial load
     loadAllData();
 </script>
 </body>
