@@ -170,6 +170,8 @@
         .table-wrapper {
             overflow-x: auto;
             border-radius: 20px;
+            max-height: 500px;
+            overflow-y: auto;
         }
 
         table {
@@ -187,6 +189,7 @@
             border-bottom: 1px solid #e2edf2;
             position: sticky;
             top: 0;
+            z-index: 10;
         }
 
         td {
@@ -346,7 +349,7 @@
                 </tbody>
             </table>
         </div>
-        <div style="font-size:12px; margin-top:14px; color:#6b7e8b; text-align:right">📷 Click on any photo to enlarge | 🖱️ Supports Google Drive images</div>
+        <div style="font-size:12px; margin-top:14px; color:#6b7e8b; text-align:right">📷 Click on any photo to enlarge | 🖱️ Shows unique records only</div>
     </div>
 </div>
 
@@ -361,131 +364,64 @@
     let monthlyChart = null;
 
     // ============================================================
-    // CRITICAL FIX: Convert Google Drive links to direct image URLs
+    // Convert Google Drive links to direct image URLs
     // ============================================================
     function convertToDirectImageUrl(url) {
         if (!url || typeof url !== 'string') return null;
         
         url = url.trim();
         
-        // Already a direct image URL
         if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i)) return url;
         
-        // Handle: https://drive.google.com/open?id=XXXXX
         let match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (match && match[1]) {
             return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
         }
         
-        // Handle: https://drive.google.com/file/d/XXXXX/view
         match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (match && match[1]) {
             return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
         }
         
-        // Handle: https://drive.google.com/uc?export=view&id=XXXXX
-        match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) {
-            return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
-        }
-        
-        // Check if it's already a working Google thumbnail
         if (url.includes('thumbnail?id=')) return url;
         
         return null;
     }
 
     // ============================================================
-    // Sample data from your Excel file (IN entries with photos)
-    // This ensures photos display immediately while API loads
+    // Parse CSV line (handles quoted fields)
     // ============================================================
-    const sampleData = [
-        { timestamp: "2026-04-10 16:20:31", name: "Risya", dept: "DC", action: "IN", type: "Rack", qty: 1, photo: "https://drive.google.com/open?id=1_P8F1KIq7gFN_K7l2WPRdQ0lvMyHkHZu", category: "Furniture" },
-        { timestamp: "2026-04-15 14:43:21", name: "aqib", dept: "LEAN", action: "IN", type: "EPSON ROBOT GAUGE", qty: 1, photo: "https://drive.google.com/open?id=1V0V-8C1SF0ut8jGsSZbGix7eKBdRzAZe", category: "Machineries" },
-        { timestamp: "2026-04-15 14:46:03", name: "aqib", dept: "LEAN", action: "IN", type: "HEAT INSULATION BUBBLE FOIL", qty: 1, photo: "https://drive.google.com/open?id=14-3CMIZuFj0ugRAabo4XXSgP1iMQiFEC", category: "Production Tools" },
-        { timestamp: "2026-04-15 14:49:08", name: "aqib", dept: "LEAN", action: "IN", type: "USM MACHINE", qty: 1, photo: "https://drive.google.com/open?id=1IdITJPaJgmh7wv3KF6Yts7j8jjnjB2C2", category: "Machineries" },
-        { timestamp: "2026-04-15 14:53:05", name: "aqib", dept: "LEAN", action: "IN", type: "AC/DC ADAPTER", qty: 1, photo: "https://drive.google.com/open?id=1LpyEkNWFeLPMMljUA3-fhBvvl3M-ldPV", category: "Electrical" },
-        { timestamp: "2026-04-15 14:54:17", name: "aqib", dept: "LEAN", action: "IN", type: "CLAMP", qty: 1, photo: "https://drive.google.com/open?id=1N3Zus_6a6YKiF1GP22ytcltkTuWOQjk7", category: "Mechanical" },
-        { timestamp: "2026-04-15 14:56:28", name: "aqib", dept: "LEAN", action: "IN", type: "CONTROL BOX", qty: 1, photo: "https://drive.google.com/open?id=1zQBhtv-kpWtnU7Tlk9LLwYFdL1v87stp", category: "Mechanical" },
-        { timestamp: "2026-04-15 15:00:47", name: "aqib", dept: "LEAN", action: "IN", type: "STOP PUSH BUTTON", qty: 1, photo: "https://drive.google.com/open?id=1EdG6sZ5HrPa_U1hJpl7QyoLeWxYO9lye", category: "Electrical" },
-        { timestamp: "2026-04-15 15:22:07", name: "aqib", dept: "LEAN", action: "IN", type: "MICRO DIAPHRAGM PUMP", qty: 1, photo: "https://drive.google.com/open?id=1Bvi9wEquplVrn1ltX3IXnMDt7v_m3Z9g", category: "Electrical" },
-        { timestamp: "2026-04-15 15:30:04", name: "AQIB", dept: "LEAN", action: "IN", type: "WARNING LIGHT", qty: 1, photo: "https://drive.google.com/open?id=1t4qKDGSXH1sV1HbNz6EwLSKfbWKfKisN", category: "Production Tools" },
-        { timestamp: "2026-04-15 15:32:26", name: "AQIB", dept: "LEAN", action: "IN", type: "PRODUCTION OUTPUT DISPLAY BOARD", qty: 2, photo: "https://drive.google.com/open?id=1EjAfwtHywXZWgrCV_YhsK0DQkpfY3aLM", category: "Production Tools" },
-        { timestamp: "2026-04-15 15:34:59", name: "AQIB", dept: "LEAN", action: "IN", type: "Rack", qty: 1, photo: "https://drive.google.com/open?id=1ao_I8vtrd8eX_r6J2JTwd4VwjdSckLRO", category: "Furniture" },
-        { timestamp: "2026-04-15 15:38:13", name: "AQIB", dept: "LEAN", action: "IN", type: "OPERATOR TABLE", qty: 2, photo: "https://drive.google.com/open?id=19v8A2m9o4eGPP7gsUTmcsiATvgrFB_b3", category: "Furniture" },
-        { timestamp: "2026-04-15 15:48:35", name: "AQIB", dept: "LEAN", action: "IN", type: "SUB COMPONENT FIXTURE (MIXED)", qty: 19, photo: "https://drive.google.com/open?id=1-8_NRAJchGcwFrDxFeNP_AMQA66ARdED", category: "Jig & Fixture" },
-        { timestamp: "2026-04-28 10:56:40", name: "Atirah Faizal", dept: "FIN", action: "IN", type: "Pallet rack step beams", qty: 10, photo: "https://drive.google.com/open?id=1CRqnez9XTmeS71rQIPzqtUlYYJcnM4t6", category: "Furniture" },
-        { timestamp: "2026-05-05 16:45:53", name: "Akmal", dept: "CNC", action: "IN", type: "Beam rack", qty: 12, photo: "https://drive.google.com/open?id=1MJNZBM-4Chus2ma2VDWhcuq_0RZa1k5V", category: "Furniture" },
-        { timestamp: "2026-05-06 11:08:41", name: "Rauf", dept: "CNC", action: "IN", type: "Poka yoke HSG D20N86", qty: 1, photo: "https://drive.google.com/open?id=1lE4SqxD5UP-BYeMy88WytO5_TD7ycV7m", category: "Machineries" },
-        { timestamp: "2026-05-08 16:54:19", name: "Azamuddin", dept: "CNC", action: "IN", type: "Beam", qty: 11, photo: "https://drive.google.com/open?id=1KHb0H58r6gMnW7nxnqsBT_MaWkUUYLGK", category: "Furniture" }
-    ];
-
-    // Load both sample + any external data
-    async function loadAllData() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '<tr><td colspan="8" class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i> Loading inventory data...</td></tr>';
-        
-        // Start with sample data
-        allTransactions = sampleData.map(item => ({
-            timestamp: item.timestamp,
-            name: item.name,
-            department: item.dept,
-            action: item.action,
-            type: item.type,
-            qty: item.qty,
-            photoRaw: item.photo,
-            photoUrl: convertToDirectImageUrl(item.photo),
-            category: item.category
-        }));
-        
-        // Try to fetch from published sheets (if available)
-        try {
-            const SHEET1_URL = "https://docs.google.com/spreadsheets/d/1JagOTXUhyd82PCewfXg9w05Qa_ZSGBkf/export?format=csv&gid=588416481";
-            const SHEET2_URL = "https://docs.google.com/spreadsheets/d/1JagOTXUhyd82PCewfXg9w05Qa_ZSGBkf/export?format=csv&gid=1922926162";
-            
-            const response1 = await fetch(SHEET1_URL).catch(() => null);
-            const response2 = await fetch(SHEET2_URL).catch(() => null);
-            
-            if (response1 && response1.ok) {
-                const csv1 = await response1.text();
-                const parsed1 = parseCSVToTransactions(csv1);
-                allTransactions = [...allTransactions, ...parsed1];
+    function parseCSVLine(line) {
+        const result = [];
+        let inQuotes = false;
+        let current = '';
+        for (let ch of line) {
+            if (ch === '"') {
+                inQuotes = !inQuotes;
+            } else if (ch === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += ch;
             }
-            if (response2 && response2.ok) {
-                const csv2 = await response2.text();
-                const parsed2 = parseCSVToTransactions(csv2);
-                allTransactions = [...allTransactions, ...parsed2];
-            }
-        } catch(e) {
-            console.log("External sheet fetch skipped, using sample data only");
         }
-        
-        // Remove duplicates by timestamp+type
-        const unique = new Map();
-        for (let t of allTransactions) {
-            const key = t.timestamp + t.type + t.name;
-            if (!unique.has(key)) unique.set(key, t);
-        }
-        allTransactions = Array.from(unique.values());
-        
-        // Sort by timestamp descending
-        allTransactions.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
-        document.getElementById('lastUpdated').innerHTML = `✅ Last updated: ${new Date().toLocaleString()} · ${allTransactions.length} records · 🖼️ Click photos to enlarge`;
-        
-        updateKPIsAndCharts();
-        populateCategoryFilter();
-        filterTableRender();
+        result.push(current.trim());
+        return result;
     }
-    
+
+    // ============================================================
+    // Parse CSV to transaction objects
+    // ============================================================
     function parseCSVToTransactions(csvText) {
         const lines = csvText.split(/\r?\n/);
         if (lines.length < 2) return [];
+        
         const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
         const transactions = [];
         
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
+            
             const row = parseCSVLine(lines[i]);
             const record = {};
             headers.forEach((h, idx) => { record[h] = row[idx] || ''; });
@@ -493,7 +429,10 @@
             let action = (record["Please select action"] || "").toUpperCase();
             if (!action) action = (record["Please select action"] || "").toUpperCase();
             
-            let type = "", qty = 0, photo = "", category = record["Categories"] || record["categories"] || "Uncategorized";
+            if (action !== "IN" && action !== "OUT") continue;
+            
+            let type = "", qty = 0, photo = "";
+            let category = record["Categories"] || record["categories"] || "Uncategorized";
             let timestamp = record["Timestamp"] || "";
             let name = record["Name"] || "";
             let dept = record["Department"] || "";
@@ -523,23 +462,68 @@
         }
         return transactions;
     }
-    
-    function parseCSVLine(line) {
-        const result = [];
-        let inQuotes = false;
-        let current = '';
-        for (let ch of line) {
-            if (ch === '"') {
-                inQuotes = !inQuotes;
-            } else if (ch === ',' && !inQuotes) {
-                result.push(current.trim());
-                current = '';
-            } else {
-                current += ch;
+
+    // ============================================================
+    // Main load function - fetches ONLY from Google Sheets (no duplicates)
+    // ============================================================
+    async function loadAllData() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '<tr><td colspan="8" class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i> Loading inventory data from Google Sheets...</td></tr>';
+        
+        allTransactions = [];
+        
+        // Google Sheet CSV export URLs (you need to publish your sheets)
+        // Replace these with your actual published CSV URLs
+        const SHEET1_URL = "https://docs.google.com/spreadsheets/d/1JagOTXUhyd82PCewfXg9w05Qa_ZSGBkf/export?format=csv&gid=588416481";
+        const SHEET2_URL = "https://docs.google.com/spreadsheets/d/1JagOTXUhyd82PCewfXg9w05Qa_ZSGBkf/export?format=csv&gid=1922926162";
+        
+        try {
+            // Try to fetch from Sheet 1 (Form responses 1)
+            const response1 = await fetch(SHEET1_URL).catch(() => null);
+            if (response1 && response1.ok) {
+                const csv1 = await response1.text();
+                const parsed1 = parseCSVToTransactions(csv1);
+                allTransactions.push(...parsed1);
+                console.log(`Loaded ${parsed1.length} records from Sheet 1`);
+            }
+            
+            // Try to fetch from Sheet 2 (2025)
+            const response2 = await fetch(SHEET2_URL).catch(() => null);
+            if (response2 && response2.ok) {
+                const csv2 = await response2.text();
+                const parsed2 = parseCSVToTransactions(csv2);
+                allTransactions.push(...parsed2);
+                console.log(`Loaded ${parsed2.length} records from Sheet 2`);
+            }
+            
+        } catch(e) {
+            console.error("Error fetching sheets:", e);
+            tbody.innerHTML = '<tr><td colspan="8" class="loading-placeholder">❌ Failed to load data. Please check that your Google Sheets are published as CSV.<br><br>📌 To publish: File → Share → Publish to web → Select CSV format</td></tr>';
+        }
+        
+        // Remove duplicates using a unique key (timestamp + type + name)
+        const uniqueMap = new Map();
+        for (let t of allTransactions) {
+            const key = `${t.timestamp}|${t.type}|${t.name}|${t.action}`;
+            if (!uniqueMap.has(key)) {
+                uniqueMap.set(key, t);
             }
         }
-        result.push(current.trim());
-        return result;
+        allTransactions = Array.from(uniqueMap.values());
+        
+        // Sort by timestamp descending (newest first)
+        allTransactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        const totalCount = allTransactions.length;
+        document.getElementById('lastUpdated').innerHTML = `✅ Last updated: ${new Date().toLocaleString()} · ${totalCount} unique records · 🖼️ Click photos to enlarge`;
+        
+        if (totalCount === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="loading-placeholder">📭 No data found. Please publish your Google Sheets as CSV first.</td></tr>';
+        }
+        
+        updateKPIsAndCharts();
+        populateCategoryFilter();
+        filterTableRender();
     }
     
     function updateKPIsAndCharts() {
@@ -564,11 +548,19 @@
         const ctxCat = document.getElementById('categoryChart').getContext('2d');
         categoryChart = new Chart(ctxCat, {
             type: 'bar',
-            data: { labels: sorted.map(v => v[0]), data: sorted.map(v => v[1]) },
+            data: { 
+                labels: sorted.map(v => v[0]), 
+                datasets: [{ 
+                    label: 'Total Quantity', 
+                    data: sorted.map(v => v[1]), 
+                    backgroundColor: '#289672',
+                    borderRadius: 8
+                }] 
+            },
             options: { 
                 responsive: true, 
                 maintainAspectRatio: true,
-                plugins: { legend: { display: false } }
+                plugins: { legend: { position: 'top' } }
             }
         });
         
@@ -587,7 +579,18 @@
         const ctxMonth = document.getElementById('monthlyChart').getContext('2d');
         monthlyChart = new Chart(ctxMonth, {
             type: 'line',
-            data: { labels: monthsSorted, datasets: [{ label: 'Total Quantity', data: monthsSorted.map(m => monthAgg.get(m)), borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.1)', fill: true, tension: 0.3 }] },
+            data: { 
+                labels: monthsSorted, 
+                datasets: [{ 
+                    label: 'Total Quantity Moved', 
+                    data: monthsSorted.map(m => monthAgg.get(m)), 
+                    borderColor: '#e67e22', 
+                    backgroundColor: 'rgba(230,126,34,0.1)', 
+                    fill: true, 
+                    tension: 0.3,
+                    pointBackgroundColor: '#e67e22'
+                }] 
+            },
             options: { responsive: true, maintainAspectRatio: true }
         });
     }
@@ -623,7 +626,12 @@
         
         filtered.slice(0, 200).forEach(t => {
             const row = tbody.insertRow();
-            const dateStr = t.timestamp ? t.timestamp.substring(0, 16).replace('T', ' ') : 'Unknown';
+            let dateStr = t.timestamp;
+            if (dateStr) {
+                dateStr = dateStr.replace('T', ' ').substring(0, 16);
+            } else {
+                dateStr = 'Unknown';
+            }
             row.insertCell(0).innerText = dateStr;
             row.insertCell(1).innerText = t.name || '-';
             row.insertCell(2).innerText = t.department || '-';
@@ -658,10 +666,12 @@
         document.getElementById('imageModal').classList.remove('show');
     };
     
+    // Event listeners
     document.getElementById('actionFilter').addEventListener('change', () => filterTableRender());
     document.getElementById('categoryFilter').addEventListener('change', () => filterTableRender());
     document.getElementById('searchInput').addEventListener('keyup', () => filterTableRender());
     
+    // Load data on page load
     loadAllData();
 </script>
 </body>
